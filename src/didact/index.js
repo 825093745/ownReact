@@ -65,11 +65,11 @@ const render = (element, container) => {
       alternate: currentRoot, // alternate指向上一次渲染的fiber树
     }
     deletions = []
-    nextUnitOfWork = wipRoot
+    workInProgress = wipRoot
 }
 
 // render阶段待处理的fiber节点
-let nextUnitOfWork = null
+let workInProgress = null
 // 当前页面上已有的fiber树（上次渲染的fiber树）
 let currentRoot = null
 // 当前正在进行渲染的fiber树
@@ -249,9 +249,9 @@ const workLoop = (deadline) => {
 
   // render阶段
   // 循环处理fiber树，通过执行performUnitOfWork方法来实现。
-  while (nextUnitOfWork && !shouldYield) {
-    nextUnitOfWork = performUnitOfWork(
-      nextUnitOfWork
+  while (workInProgress && !shouldYield) {
+    workInProgress = performUnitOfWork(
+      workInProgress
     )
     // 是否需要暂停（让位）
     shouldYield = deadline.timeRemaining() < 1
@@ -259,7 +259,7 @@ const workLoop = (deadline) => {
 
   // commit阶段
   // 当处理完fiber树上的所有fiber节点后，再统一提交
-  if (!nextUnitOfWork && wipRoot) {
+  if (!workInProgress && wipRoot) {
     commitRoot()
   }
   requestIdleCallback(workLoop)
@@ -309,7 +309,7 @@ const performUnitOfWork = (fiber) => {
  */
 const reconcileChildren = (wipFiber, elements) => {
   let index = 0
-  let oldFiber = wipFiber.alternate && wipFiber.alternate.child;
+  let oldFiber = wipFiber?.alternate?.child;
   let prevSibling = null
 
   // 根据fiber的children创建fiber的子节点。fiber的child指针指向第一个子节点，然后每个子节点的siblig指向同级的下一个节点
@@ -421,14 +421,14 @@ const useState = (initial) => {
   const setState = stateValue => {
     // 将设置的值添加的hook队列中
     hook.queue.push(stateValue)
-    // 将wipRoot以及nextUnitOfWork设为根节点，表示下个时间片进行render的时候是从根节点进行render
+    // 将wipRoot以及workInProgress设为根节点，表示下个时间片进行render的时候是从根节点进行render
     // 注意，这里是渲染了整棵树，但是在真实的react中是从当前节点开始向下渲染
     wipRoot = {
       dom: currentRoot.dom,
       props: currentRoot.props,
       alternate: currentRoot,
     }
-    nextUnitOfWork = wipRoot
+    workInProgress = wipRoot
     deletions = []
   }
 
